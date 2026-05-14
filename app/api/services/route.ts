@@ -8,8 +8,10 @@ const ServiceSchema = z.object({
   description:  z.string().max(500).optional(),
   duration_min: z.number().int().positive(),
   price_eur:    z.number().min(0),
+  image_url:    z.string().url().nullable().optional(),
   active:       z.boolean().default(true),
   sort_order:   z.number().int().default(0),
+  category:     z.string().nullable().optional(),
 })
 
 async function requireAuth() {
@@ -30,7 +32,8 @@ export async function POST(req: NextRequest) {
     const { data: service, error } = await db.from('services').insert(data).select().single()
     if (error) throw error
 
-    revalidatePath('/servicios')
+    revalidatePath('/')
+    revalidatePath('/reservar')
     revalidatePath('/dashboard/servicios')
     return NextResponse.json({ success: true, data: service }, { status: 201 })
   } catch (error) {

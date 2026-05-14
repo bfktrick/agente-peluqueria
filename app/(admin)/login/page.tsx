@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Spinner } from '@/components/ui/spinner'
 
 export default function LoginPage() {
@@ -17,17 +16,19 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
 
-    if (authError) {
+    if (!res.ok) {
       setError('Credenciales incorrectas. Verifica tu email y contraseña.')
       setLoading(false)
       return
     }
 
     router.push('/dashboard')
-    router.refresh()
   }
 
   return (

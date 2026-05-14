@@ -4,9 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const links = [
-  { href: '/dashboard',          label: 'Resumen',    icon: '◈' },
-  { href: '/dashboard/citas',    label: 'Citas',      icon: '◷' },
-  { href: '/dashboard/servicios', label: 'Servicios', icon: '✦' },
+  { href: '/dashboard',            label: 'Resumen',   icon: '◈' },
+  { href: '/dashboard/citas',      label: 'Citas',     icon: '◷' },
+  { href: '/dashboard/servicios',  label: 'Servicios', icon: '✦' },
+  { href: '/dashboard/imagenes',   label: 'Imágenes',  icon: '◻' },
+  { href: '/dashboard/opiniones',  label: 'Opiniones', icon: '★' },
+  { href: '/dashboard/pagina',     label: 'Página',    icon: '⊞' },
+  { href: '/dashboard/bot',        label: 'Bot',       icon: '◎' },
+  { href: '/dashboard/seguridad',  label: 'Seguridad', icon: '⊙' },
 ]
 
 export function Sidebar() {

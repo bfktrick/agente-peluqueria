@@ -1,3 +1,16 @@
+export const SERVICE_CATEGORIES = [
+  { value: 'cortes',     label: 'Cortes' },
+  { value: 'barba',      label: 'Barba' },
+  { value: 'color',      label: 'Color' },
+  { value: 'unas',       label: 'Uñas' },
+  { value: 'estetica',   label: 'Estética' },
+  { value: 'maquillaje', label: 'Maquillaje' },
+  { value: 'peinado',    label: 'Peinado' },
+  { value: 'otros',      label: 'Otros' },
+] as const
+
+export type ServiceCategory = typeof SERVICE_CATEGORIES[number]['value']
+
 export interface Service {
   id: string
   name: string
@@ -7,6 +20,7 @@ export interface Service {
   image_url: string | null
   active: boolean
   sort_order: number
+  category: string | null
   created_at: string
 }
 

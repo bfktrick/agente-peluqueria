@@ -1,138 +1,106 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
 
-const links = [
-  { href: '/servicios', label: 'Servicios' },
-  { href: '/resenas', label: 'Reseñas' },
+const navLinks = [
+  { label: 'Servicios',      href: '/#servicios' },
+  { label: 'Opiniones',      href: '/#opiniones' },
+  { label: 'Sobre nosotros', href: '/#experiencia' },
+  { label: 'Contacto',       href: '/#contacto' },
 ]
 
 export function Navbar() {
   const pathname = usePathname()
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  // Close menu on route change
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  const [open, setOpen] = useState(false)
 
   return (
-    <>
-      <header
-        className="fixed top-0 inset-x-0 z-50 transition-all duration-500"
-        style={{
-          background: scrolled
-            ? 'rgba(10,10,10,0.92)'
-            : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(45,107,45,0.15)' : '1px solid transparent',
-        }}
-      >
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="font-serif text-lg text-white tracking-wide hover:text-green-light transition-colors duration-200"
-          >
-            AG Beauty
-          </Link>
+    <header
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{
+        background: 'rgba(10,10,10,0.92)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <div className="mx-auto max-w-6xl px-5 h-12 flex items-center justify-between gap-6">
+        {/* Logo */}
+        <a
+          href="/"
+          className="font-serif text-base font-semibold tracking-wider text-white shrink-0"
+        >
+          AG Beauty
+        </a>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-10">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="label transition-colors duration-200 hover:text-white"
-                style={{
-                  color: pathname === l.href ? 'var(--color-green-light)' : undefined,
-                }}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* CTA + hamburger */}
-          <div className="flex items-center gap-4">
-            <Link href="/reservar" className="hidden md:inline-flex btn-primary">
-              Reservar cita
-            </Link>
-
-            {/* Hamburger */}
-            <button
-              className="md:hidden flex flex-col gap-1.5 p-2"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+        {/* Desktop links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navLinks.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="px-3 py-1.5 rounded text-xs font-light tracking-wide text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all duration-200"
             >
-              <motion.span
-                className="block w-5 h-px bg-white origin-center"
-                animate={menuOpen ? { rotate: 45, y: 4 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.25 }}
-              />
-              <motion.span
-                className="block w-5 h-px bg-white"
-                animate={menuOpen ? { opacity: 0 } : { opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              />
-              <motion.span
-                className="block w-5 h-px bg-white origin-center"
-                animate={menuOpen ? { rotate: -45, y: -4 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.25 }}
-              />
-            </button>
-          </div>
+              {l.label}
+            </a>
+          ))}
         </nav>
-      </header>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 md:hidden"
-            style={{ background: 'rgba(10,10,10,0.97)' }}
+        {/* CTA + hamburger */}
+        <div className="flex items-center gap-3">
+          {!pathname.startsWith('/reservar') && (
+            <a
+              href="/reservar"
+              className="hidden md:inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded text-xs font-medium hover:bg-[#F0C84A] transition-colors shrink-0"
+            >
+              Reservar citas
+            </a>
+          )}
+          <button
+            onClick={() => setOpen(!open)}
+            className="md:hidden text-white p-1"
+            aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           >
-            <div className="flex flex-col items-center justify-center h-full gap-10">
-              {links.map((l, i) => (
-                <motion.div
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden overflow-hidden"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="flex flex-col px-5 py-3 gap-1">
+              {navLinks.map((l) => (
+                <a
                   key={l.href}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="py-2 text-sm text-[#A1A1AA] hover:text-white transition-colors"
                 >
-                  <Link
-                    href={l.href}
-                    className="heading-md hover:text-green-light transition-colors duration-200"
-                  >
-                    {l.label}
-                  </Link>
-                </motion.div>
+                  {l.label}
+                </a>
               ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Link href="/reservar" className="btn-primary">
-                  Reservar cita
-                </Link>
-              </motion.div>
+              {!pathname.startsWith('/reservar') && (
+                <a
+                  href="/reservar"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 text-center bg-[#D4AF37] text-black px-4 py-2 rounded text-sm font-medium hover:bg-[#F0C84A] transition-colors"
+                >
+                  Reservar citas
+                </a>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </header>
   )
 }

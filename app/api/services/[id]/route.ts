@@ -8,8 +8,10 @@ const PatchSchema = z.object({
   description:  z.string().max(500).optional(),
   duration_min: z.number().int().positive().optional(),
   price_eur:    z.number().min(0).optional(),
+  image_url:    z.string().url().nullable().optional(),
   active:       z.boolean().optional(),
   sort_order:   z.number().int().optional(),
+  category:     z.string().nullable().optional(),
 })
 
 async function requireAuth() {
@@ -40,7 +42,8 @@ export async function PATCH(
 
     if (error) throw error
 
-    revalidatePath('/servicios')
+    revalidatePath('/')
+    revalidatePath('/reservar')
     revalidatePath('/dashboard/servicios')
     return NextResponse.json({ success: true, data: service })
   } catch (error) {

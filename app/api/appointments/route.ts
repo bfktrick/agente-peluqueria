@@ -5,10 +5,10 @@ import type { CreateAppointmentDto } from '@/lib/types'
 
 const CreateAppointmentSchema = z.object({
   customer_name:  z.string().min(2).max(100),
-  customer_phone: z.string().regex(/^\+?[\d\s\-().]{7,20}$/),
+  customer_phone: z.string().regex(/^\+?[\d\s\-]{7,20}$/, 'Teléfono inválido: solo dígitos, espacios o +'),
   customer_email: z.string().email().optional(),
   service_id:     z.string().uuid(),
-  scheduled_at:   z.string().datetime(),
+  scheduled_at:   z.string().min(1),
   notes:          z.string().max(500).optional(),
   channel:        z.enum(['web', 'voice', 'whatsapp', 'email']).default('web'),
 })
@@ -35,8 +35,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: appointment }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Validation error issues:', JSON.stringify(error.issues, null, 2))
+      const message = error.issues.map((i) => (i as { message: string }).message).join('. ')
       return NextResponse.json(
-        { success: false, error: { code: 'VALIDATION_ERROR', message: error.issues } },
+        { success: false, error: { code: 'VALIDATION_ERROR', message } },
         { status: 400 }
       )
     }

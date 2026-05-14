@@ -4,7 +4,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <>
       <Navbar />
-      {children}
+      <div style={{ paddingTop: '48px' }}>{children}</div>
     </>
   )
 }

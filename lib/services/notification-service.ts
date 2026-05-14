@@ -42,7 +42,7 @@ export class NotificationService {
     )
   }
 
-  async sendConfirmation(apt: Appointment): Promise<void> {
+  async sendConfirmation(apt: Appointment, service?: Service): Promise<void> {
     if (!apt.customer_email) return
 
     const date = new Date(apt.scheduled_at).toLocaleString('es-ES', {
@@ -55,13 +55,21 @@ export class NotificationService {
 
     await this.sendEmail(
       apt.customer_email,
-      '✅ Cita confirmada — AG Beauty Salon',
+      'Cita confirmada — AG Beauty Salon',
       `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-          <h2 style="margin:0 0 16px">¡Cita confirmada!</h2>
-          <p>Hola ${apt.customer_name}, tu cita ha sido confirmada para el ${date}.</p>
-          <p>Te esperamos en Avinguda Principat d'Andorra, 10 A, Tarragona.</p>
-          <p style="color:#888;font-size:12px;margin-top:24px">AG Beauty Salon</p>
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;color:#111">
+          <h2 style="margin:0 0 8px;font-size:22px">Cita confirmada</h2>
+          <p style="color:#555;margin:0 0 24px">Hola <strong>${apt.customer_name}</strong>, tu reserva está confirmada.</p>
+          <div style="background:#f8f8f8;border-radius:8px;padding:20px;margin-bottom:24px">
+            ${service ? `<p style="margin:6px 0"><strong>Servicio:</strong> ${service.name}</p>` : ''}
+            <p style="margin:6px 0"><strong>Fecha y hora:</strong> ${date}</p>
+            ${service ? `<p style="margin:6px 0"><strong>Precio:</strong> ${service.price_eur.toFixed(2)} €</p>` : ''}
+            <p style="margin:6px 0"><strong>Duración:</strong> ${service?.duration_min ?? '—'} min</p>
+          </div>
+          <p style="margin:0 0 6px"><strong>Dónde:</strong> Avinguda Principat d'Andorra, 10 A, 43002 Tarragona</p>
+          <p style="color:#888;font-size:12px;margin-top:28px;border-top:1px solid #eee;padding-top:16px">
+            AG Beauty Salon · Si necesitas cancelar, contáctanos con antelación.
+          </p>
         </div>
       `
     )

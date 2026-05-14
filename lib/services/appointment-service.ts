@@ -19,17 +19,33 @@ export class AppointmentService {
     const availabilityService = new AvailabilityService(this.appointmentRepo, this.settingsRepo)
     const slots = await availabilityService.getAvailableSlots(scheduledDate, service.duration_min)
 
-    const requestedSlot = slots.find((s) => s.datetime === dto.scheduled_at)
+    // Compare by timestamp (±5 min tolerance) to handle timezone/format differences
+    const requestedMs = scheduledDate.getTime()
+    const requestedSlot = slots.find(
+      (s) => Math.abs(new Date(s.datetime).getTime() - requestedMs) <= 5 * 60_000
+    )
     if (!requestedSlot?.available) {
       throw new Error('El horario seleccionado no está disponible')
     }
 
-    const appointment = await this.appointmentRepo.insert(dto)
+    // Use the slot's own datetime to guarantee format consistency in DB
+    dto = { ...dto, scheduled_at: requestedSlot.datetime }
+
+    // Web bookings are auto-confirmed — no manual review needed if slot is free
+    // Voice/WhatsApp bookings stay as 'pending' for owner review
+    const status = dto.channel === 'web' ? 'confirmed' : 'pending'
+    const appointment = await this.appointmentRepo.insert(dto, status)
 
     // Non-blocking notification
-    this.notificationService
-      .sendAppointmentRequest(appointment, service)
-      .catch((err: unknown) => console.error('Notification error:', err))
+    if (status === 'confirmed') {
+      this.notificationService
+        .sendConfirmation(appointment, service)
+        .catch((err: unknown) => console.error('Notification error:', err))
+    } else {
+      this.notificationService
+        .sendAppointmentRequest(appointment, service)
+        .catch((err: unknown) => console.error('Notification error:', err))
+    }
 
     return appointment
   }

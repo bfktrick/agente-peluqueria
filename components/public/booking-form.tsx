@@ -202,10 +202,10 @@ function DateTimeStep({
       {/* Time slots */}
       {selectedDate && (
         <div>
-          <p className="label mb-4">
+          <div className="label mb-4">
             Horarios disponibles
             {loading && <Spinner size="sm" className="inline ml-3" />}
-          </p>
+          </div>
           {!loading && availableSlots.length === 0 && (
             <p className="body-sm" style={{ color: 'var(--color-white-subtle)' }}>
               No hay huecos disponibles este día. Prueba con otra fecha.
@@ -238,6 +238,10 @@ function DateTimeStep({
   )
 }
 
+const PHONE_RE = /^\+?[\d\s\-]{7,20}$/
+
+function isValidPhone(v: string) { return PHONE_RE.test(v.trim()) }
+
 // ── Step 3: Personal details ───────────────────────────────────────────────
 function DetailsStep({
   state,
@@ -246,6 +250,9 @@ function DetailsStep({
   state: BookingState
   onChange: (k: keyof BookingState, v: string) => void
 }) {
+  const phoneTouched = state.phone.length > 0
+  const phoneValid   = isValidPhone(state.phone)
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
@@ -270,7 +277,13 @@ function DetailsStep({
           value={state.phone}
           onChange={(e) => onChange('phone', e.target.value)}
           required
+          style={phoneTouched && !phoneValid ? { borderColor: '#f87171' } : {}}
         />
+        {phoneTouched && !phoneValid && (
+          <p className="text-xs mt-1" style={{ color: '#f87171' }}>
+            Introduce un número de teléfono válido (solo dígitos, espacios o +)
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -376,7 +389,7 @@ export function BookingForm({
   preselectedServiceId?: string
 }) {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('service')
+  const [step, setStep] = useState<Step>(preselectedServiceId ? 'datetime' : 'service')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [state, setState] = useState<BookingState>({
@@ -399,7 +412,7 @@ export function BookingForm({
   const canProceed: Record<Step, boolean> = {
     service:  !!state.serviceId,
     datetime: !!state.date && !!state.slot,
-    details:  state.name.trim().length >= 2 && state.phone.trim().length >= 7,
+    details:  state.name.trim().length >= 2 && isValidPhone(state.phone),
     confirm:  true,
   }
 
@@ -421,21 +434,27 @@ export function BookingForm({
     setError(null)
 
     try {
+      const emailTrimmed = state.email.trim()
+      const body: Record<string, string> = {
+        customer_name:  state.name.trim(),
+        customer_phone: state.phone.trim(),
+        service_id:     state.serviceId,
+        scheduled_at:   state.slot.datetime,
+        channel:        'web',
+      }
+      // Only include email if it looks valid (has @ and a dot after it)
+      if (emailTrimmed && /^[^@]+@[^@]+\.[^@]+$/.test(emailTrimmed)) {
+        body.customer_email = emailTrimmed
+      }
+      if (state.notes.trim()) body.notes = state.notes.trim()
+
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name:  state.name,
-          customer_phone: state.phone,
-          customer_email: state.email || undefined,
-          service_id:     state.serviceId,
-          scheduled_at:   state.slot.datetime,
-          notes:          state.notes || undefined,
-          channel:        'web',
-        }),
+        body: JSON.stringify(body),
       })
 
-      const json = await res.json() as { success: boolean; error?: { message: string } }
+      const json = await res.json() as { success: boolean; error?: { code: string; message: string } }
 
       if (!json.success) {
         setError(json.error?.message ?? 'Error al reservar. Inténtalo de nuevo.')
@@ -455,7 +474,10 @@ export function BookingForm({
       <ServiceStep
         services={services}
         selected={state.serviceId}
-        onSelect={(id) => updateState('serviceId', id)}
+        onSelect={(id) => {
+          setState((prev) => ({ ...prev, serviceId: id, date: '', slot: null }))
+          goNext()
+        }}
       />
     ),
     datetime: (
@@ -476,6 +498,36 @@ export function BookingForm({
       className="p-8 sm:p-10"
       style={{ background: 'var(--color-surface)', border: '1px solid var(--color-surface-2)' }}
     >
+      {/* Selected service summary — shown on all steps except service selection */}
+      {step !== 'service' && selectedService && (
+        <div
+          className="flex items-center justify-between mb-8 p-4"
+          style={{
+            background: 'var(--color-green-deep)',
+            border: '1px solid var(--color-green-forest)',
+          }}
+        >
+          <div>
+            <span className="label-sm block mb-1" style={{ color: 'var(--color-green-sage)' }}>
+              Servicio seleccionado
+            </span>
+            <p className="font-serif text-lg text-white">{selectedService.name}</p>
+            <p className="label-sm mt-0.5" style={{ color: 'var(--color-green-light)' }}>
+              {selectedService.price_eur.toFixed(2)}€ · {selectedService.duration_min} min
+            </p>
+          </div>
+          <button
+            onClick={() => setStep('service')}
+            className="label-sm transition-colors"
+            style={{ color: 'var(--color-green-sage)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-white)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-green-sage)')}
+          >
+            Cambiar
+          </button>
+        </div>
+      )}
+
       <StepIndicator current={step} />
 
       <AnimatePresence mode="wait">

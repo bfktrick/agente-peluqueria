@@ -38,10 +38,10 @@ export class AppointmentRepository {
     return data as Appointment[]
   }
 
-  async insert(dto: CreateAppointmentDto): Promise<Appointment> {
+  async insert(dto: CreateAppointmentDto, status: 'pending' | 'confirmed' = 'pending'): Promise<Appointment> {
     const { data, error } = await this.db
       .from('appointments')
-      .insert({ ...dto, status: 'pending', reminder_sent: false })
+      .insert({ ...dto, status, reminder_sent: false })
       .select('*, service:services(*)')
       .single()
 

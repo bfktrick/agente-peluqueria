@@ -7,6 +7,12 @@ import type { Service } from '@/lib/types'
 export const metadata: Metadata = {
   title: 'Reservar cita',
   description: 'Reserva tu cita en AG Beauty Salon. Elige tu servicio, fecha y hora en segundos.',
+  openGraph: {
+    title: 'Reservar cita | AG Beauty Salon',
+    description: 'Reserva online en segundos. Disponible 24/7.',
+    url: 'https://agbeautysalon.com/reservar',
+  },
+  alternates: { canonical: '/reservar' },
 }
 
 export default async function ReservarPage({
